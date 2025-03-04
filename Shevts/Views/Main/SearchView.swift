@@ -3,6 +3,7 @@ import SwiftUI
 struct SearchView: View {
     // State for the search field
     @State private var searchText = ""
+    @FocusState private var isSearchFocused: Bool
     
     var body: some View {
         ZStack {
@@ -57,18 +58,28 @@ struct SearchView: View {
         .padding(.bottom, 16)
     }
     
-    // Search input field
+    // Search input field - FIXED
     var searchField: some View {
         HStack {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.gray)
                 .padding(.leading, 12)
             
-            Text("What are you looking for?")
+            TextField("What are you looking for?", text: $searchText)
                 .font(.custom(Constants.Fonts.regular, size: 16))
-                .foregroundColor(.gray)
+                .foregroundColor(.black)
+                .focused($isSearchFocused)
+                .submitLabel(.search)
             
-            Spacer()
+            if !searchText.isEmpty {
+                Button(action: {
+                    searchText = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                        .padding(.trailing, 12)
+                }
+            }
         }
         .frame(height: 52)
         .background(Color.white)
