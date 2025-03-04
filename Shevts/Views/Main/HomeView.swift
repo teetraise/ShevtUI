@@ -2,11 +2,12 @@ import SwiftUI
 
 struct HomeView: View {
     @State private var selectedTab: TopBarTab = .forYou
+    @State private var isFollowingAnyone: Bool = false // Изменяемое состояние для проверки наличия подписок
     
     var body: some View {
         ZStack {
             Color(hex: Constants.Colors.background)
-                            .ignoresSafeArea()
+                .ignoresSafeArea()
             VStack(spacing: 0) {
                 // Верхняя панель с вкладками
                 TopBar(selectedTab: $selectedTab)
@@ -54,16 +55,51 @@ struct HomeView: View {
                     // Following контент
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("Following")
+                            // Заголовок "Latest picks"
+                            Text("Latest picks")
                                 .font(.custom("Outfit-Medium", size: 24))
                                 .padding(.leading, 26)
                                 .padding(.top, 20)
+                                .padding(.bottom, 16)
                             
-                            Text("People you follow will appear here")
-                                .font(.custom("Outfit-Regular", size: 16))
-                                .foregroundColor(.gray)
-                                .padding(.leading, 26)
-                                .padding(.top, 10)
+                            if isFollowingAnyone {
+                                // Контент если есть подписки
+                                VStack(spacing: 23) {
+                                    ForEach(getFollowingRecommendations()) { recommendation in
+                                        RecommendationCard(recommendation: recommendation)
+                                    }
+                                }
+                                .padding(.horizontal, 26)
+                            } else {
+                                // Контент если нет подписок
+                                VStack(spacing: 10) {
+                                    // Изображение лисенка
+                                    Image("fox") // Используйте ваше изображение лисенка
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 250, height: 250)
+                                        .padding(.top, 10)
+                                    
+                                    // Текст сообщения
+                                    Text("You're not following anyone yet.")
+                                        .font(.custom("Outfit-Medium", size: 18))
+                                        .foregroundColor(.black)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.top, -28)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                            
+                            // Кнопка для переключения представления (только для демонстрации)
+                            // В реальном приложении эта кнопка будет удалена
+                            Button("Toggle Following State (Demo)") {
+                                isFollowingAnyone.toggle()
+                            }
+                            .padding()
+                            .background(Color.gray.opacity(0.2))
+                            .cornerRadius(8)
+                            .padding(.horizontal, 26)
+                            .padding(.top, 30)
                             
                             // Дополнительное пространство внизу для прокрутки
                             Spacer()
@@ -91,7 +127,7 @@ struct HomeView: View {
         ]
     }
     
-    // Пример данных для больших рекомендаций
+    // Пример данных для рекомендаций "For You"
     private func getSampleRecommendations() -> [Recommendation] {
         return [
             Recommendation(
@@ -109,6 +145,44 @@ struct HomeView: View {
                 description: "You'll never get bored — beautiful nature and girls.",
                 places: 9,
                 image: "phuket_image"
+            ),
+            Recommendation(
+                id: 3,
+                city: "Los Angeles",
+                author: "SEIN",
+                description: "The city of angels, Hollywood and palm trees.",
+                places: 12,
+                image: "la_image"
+            )
+        ]
+    }
+    
+    // Пример данных для рекомендаций "Following"
+    private func getFollowingRecommendations() -> [Recommendation] {
+        return [
+            Recommendation(
+                id: 4,
+                city: "Tbilisi",
+                author: "McLovin",
+                description: "Paradise for Russian relocants? Bars, stand-up clubs, and gardens.",
+                places: 15,
+                image: "tbilisi_image"
+            ),
+            Recommendation(
+                id: 5,
+                city: "Phuket",
+                author: "PETROVA",
+                description: "You'll never get bored — beautiful nature and girls.",
+                places: 99,
+                image: "phuket_image"
+            ),
+            Recommendation(
+                id: 6,
+                city: "Los Angeles",
+                author: "SEIN",
+                description: "Explore Hollywood, Venice Beach, and amazing food spots.",
+                places: 18,
+                image: "la_image"
             )
         ]
     }
