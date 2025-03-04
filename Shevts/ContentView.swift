@@ -1,24 +1,38 @@
-//
-//  ContentView.swift
-//  Shevts
-//
-//  Created by User on 03.03.2025.
-//
-
 import SwiftUI
 
 struct ContentView: View {
+    @State private var selectedTab = 0
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        ZStack {
+            // Фоновый цвет всего приложения
+            Color(hex: Constants.Colors.background)
+                .ignoresSafeArea()
+            
+            TabView(selection: $selectedTab) {
+                HomeView()
+                    .tag(0)
+                
+                SearchView()
+                    .tag(1)
+                
+                ProfileView()
+                    .tag(2)
+            }
+            
+            // Нижний таб-бар поверх содержимого
+            VStack {
+                Spacer()
+                BottomTabBar(selectedTab: $selectedTab)
+            }
         }
-        .padding()
+        .preferredColorScheme(.light)
+    }
+}
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
     }
 }
 
-#Preview {
-    ContentView()
-}
+
