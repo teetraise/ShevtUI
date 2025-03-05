@@ -3,6 +3,13 @@ import SwiftUI
 struct RecommendationCard: View {
     let recommendation: Recommendation
     
+    // State variables for the like button
+    @State private var isLiked = false
+    @State private var animateHeart = false
+    
+    // State for share sheet
+    @State private var showShareSheet = false
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             // Фон для всей карточки
@@ -21,18 +28,32 @@ struct RecommendationCard: View {
                     
                     // Кнопки сохранения и действий
                     HStack {
-                        Button(action: {}) {
-                            Image(systemName: "suit.heart")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white)
+                        Button(action: {
+                            // Toggle like state with animation
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                                isLiked.toggle()
+                                animateHeart = true
+                            }
+                            
+                            // Reset scale animation after a delay
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                animateHeart = false
+                            }
+                        }) {
+                            Image(systemName: isLiked ? "heart.fill" : "heart")
+                                .font(.system(size: 16))
+                                .foregroundColor(isLiked ? Color(hex: Constants.Colors.accent) : .white)
                                 .padding(8)
                                 .background(Color.black.opacity(0.05))
                                 .clipShape(Circle())
+                                .scaleEffect(animateHeart ? 1.3 : 1.0)
                         }
                         
-                        Button(action: {}) {
-                            Image(systemName: "ellipsis")
-                                .font(.system(size: 20))
+                        Button(action: {
+                            showShareSheet = true
+                        }) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 14))
                                 .foregroundColor(.white)
                                 .padding(8)
                                 .background(Color.black.opacity(0.05))
@@ -95,5 +116,20 @@ struct RecommendationCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }
         .frame(width: 370, height: 224)
+        .sheet(isPresented: $showShareSheet) {
+            ShareSheet(items: [recommendation.city])
+        }
     }
+}
+
+// ShareSheet using UIActivityViewController for sharing content
+struct ShareSheet: UIViewControllerRepresentable {
+    var items: [Any]
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

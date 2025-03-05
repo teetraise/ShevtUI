@@ -10,9 +10,22 @@
 		CEA0DC0B2D75A0610037C6F0 /* Shevts.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Shevts.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		CE9002AA2D77A95E00773DEC /* Exceptions for "Shevts" folder in "Shevts" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Views/Components/Untitled.swift,
+			);
+			target = CEA0DC0A2D75A0610037C6F0 /* Shevts */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CEA0DC0D2D75A0610037C6F0 /* Shevts */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CE9002AA2D77A95E00773DEC /* Exceptions for "Shevts" folder in "Shevts" target */,
+			);
 			path = Shevts;
 			sourceTree = "<group>";
 		};
