@@ -14,3 +14,4 @@ struct Recommendation: Identifiable {
     let places: Int
     let image: String
 }
+// модели
