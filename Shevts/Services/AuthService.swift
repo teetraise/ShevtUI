@@ -13,6 +13,7 @@ class AuthService {
     
     private let apiClient = APIClient.shared
     private let userDefaultsTokenKey = "auth_token"
+    private var cancellables = Set<AnyCancellable>() // Добавьте эту строку
     
     private init() {
         // Восстанавливаем токен при запуске, если он есть
@@ -33,6 +34,22 @@ class AuthService {
                 // Сохраняем токен
                 self?.apiClient.setToken(token.value)
                 UserDefaults.standard.set(token.value, forKey: self?.userDefaultsTokenKey ?? "")
+                
+                // Загружаем данные пользователя, используя ID из ответа
+                // Загружаем данные пользователя, используя ID из ответа
+                if let userId = UUID(uuidString: token.user.id) {
+                    // Захватываем self, чтобы иметь прямой доступ к cancellables
+                    guard let self = self else { return }
+                    
+                    UserService.shared.fetchCurrentUserData(userId: userId)
+                        .sink(
+                            receiveCompletion: { _ in },
+                            receiveValue: { user in
+                                UserDataStore.shared.saveCurrentUser(user)
+                            }
+                        )
+                        .store(in: &self.cancellables)
+                }
             })
             .eraseToAnyPublisher()
     }

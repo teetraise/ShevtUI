@@ -42,6 +42,11 @@ class UserService {
     }
     
     func getUser(id: UUID) -> AnyPublisher<User, APIError> {
-        return apiClient.request(endpoint: "/users/one/\(id)")
+        return apiClient.request(endpoint: "/users/one/\(id.uuidString)")
+    }
+    
+    // После успешного входа в систему получаем данные текущего пользователя
+    func fetchCurrentUserData(userId: UUID) -> AnyPublisher<User, APIError> {
+        return getUser(id: userId)
     }
 }

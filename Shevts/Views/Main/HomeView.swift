@@ -133,6 +133,7 @@ struct HomeView: View {
 // Создаем компонент карточки маршрута на основе данных с сервера
 struct RouteCard: View {
     let route: Route
+    @State private var authorName: String = "User"
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -189,8 +190,7 @@ struct RouteCard: View {
                     Circle()
                         .fill(Color.gray.opacity(0.5))
                         .frame(width: 15, height: 15)
-                    
-                    Text("User")
+                    Text(authorName)
                         .font(.custom("Outfit-Regular", size: 13))
                 }
                 .padding(.horizontal, 12)
@@ -210,5 +210,12 @@ struct RouteCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }
         .frame(width: 370, height: 224)
+        .onAppear {
+            UserDataStore.shared.getUser(id: route.creator.id) { user in
+                if let user = user {
+                    self.authorName = user.username
+                }
+            }
+        }
     }
 }

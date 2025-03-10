@@ -6,6 +6,7 @@ struct ProfileView: View {
     @State private var showEditProfile = false
     @EnvironmentObject var routesViewModel: RoutesViewModel
     @State private var cancellables = Set<AnyCancellable>()
+    @ObservedObject private var userDataStore = UserDataStore.shared
     
     var body: some View {
         ZStack {
@@ -72,11 +73,11 @@ struct ProfileView: View {
                 )
             
             // Имя пользователя
-            Text("Alex Smith")
-                .font(.custom(Constants.Fonts.medium, size: 24))
+            Text(userDataStore.currentUser?.username ?? "Alex Smith")
+                    .font(.custom(Constants.Fonts.medium, size: 24))
             
             // Ник пользователя
-            Text("@alexsmith")
+            Text("@\(userDataStore.currentUser?.username.lowercased() ?? "alexsmith")")
                 .font(.custom(Constants.Fonts.regular, size: 16))
                 .foregroundColor(.gray)
                 .padding(.bottom, 8)
