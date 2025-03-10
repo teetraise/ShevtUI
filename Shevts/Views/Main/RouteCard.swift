@@ -6,152 +6,153 @@
 //
 
 import SwiftUI
-import Combine
 
+// Карточка маршрута для использования в HomeView
 struct RouteCard: View {
     let route: Route
-    
-    // Используем StateObject для класса, который будет управлять состоянием
-    @StateObject private var viewModel = RouteCardViewModel()
-    
-    init(route: Route) {
-        self.route = route
-    }
+    @State private var authorName: String = "User"
+    @State private var isLiked = false
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Background for the entire card
+            // Фон для всей карточки - делаем его полностью непрозрачным
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
-                .frame(width: 370, height: 224)
+                .fill(Color.white.opacity(1)) // Явная непрозрачность 1
+                .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 2) // Раскомментировал тень
+                .frame(height: 224)
+                .zIndex(1) // Добавляем z-индекс для правильного наложения
             
-            // Route image section
-            CachedAsyncImage(
-                urlString: route.imageURL,
-                content: { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 370, height: 235 - 81)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                },
-                placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 370, height: 235 - 81)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .overlay(
-                            Image(systemName: "photo")
-                                .font(.system(size: 40))
-                                .foregroundColor(.white)
-                        )
-                }
-            )
-            .overlay(
-                // Action buttons
-                HStack {
-                    Button(action: {
-                        // Save/like functionality
-                    }) {
-                        Image(systemName: "heart")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white)
-                            .padding(8)
-                            .background(Color.black.opacity(0.05))
-                            .clipShape(Circle())
+            // Изображение маршрута
+            VStack(spacing: 0) {
+                ZStack(alignment: .topTrailing) {
+                    // Изображение с использованием AsyncImage
+                    AsyncImage(url: ImageService.shared.getImageURL(path: route.imageURL ?? "")) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(height: 154)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        } else {
+                            // Заполнитель с более насыщенным оттенком
+                            Rectangle()
+                                .fill(Color.gray.opacity(0.3)) // Увеличиваем непрозрачность
+                                .frame(height: 154)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .overlay(
+                                    Image(systemName: "photo")
+                                        .font(.system(size: 40))
+                                        .foregroundColor(.white)
+                                )
+                        }
                     }
                     
-                    Button(action: {
-                        // Share functionality
-                    }) {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white)
-                            .padding(8)
-                            .background(Color.black.opacity(0.05))
-                            .clipShape(Circle())
+                    // Кнопки сохранения и действий
+                    HStack(spacing: 10) {
+                        Button(action: {
+                            isLiked.toggle()
+                        }) {
+                            Image(systemName: isLiked ? "heart.fill" : "heart")
+                                .font(.system(size: 14))
+                                .foregroundColor(isLiked ? Color(hex: Constants.Colors.accent) : .white)
+                                .padding(8)
+                                .background(Color.black.opacity(0.3)) // Раскомментировал фон для кнопки
+                                .clipShape(Circle())
+                        }
+                        
+                        Button(action: {}) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(Color.black.opacity(0.3)) // Раскомментировал фон для кнопки
+                                .clipShape(Circle())
+                        }
                     }
+                    .padding(12)
                 }
-                .padding(12),
-                alignment: .topTrailing
-            )
+                
+                Spacer()
+            }
+            .frame(height: 224)
+            .zIndex(2) // Изображение над фоном
             
-            // Route information (overlaid at the bottom)
+            // Информация о маршруте (наложена снизу)
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .center) {
-                    // Route name
+                    // Название маршрута
                     Text(route.name)
-                        .font(.custom("Outfit-Medium", size: 22))
+                        .font(.custom(Constants.Fonts.medium, size: 20))
+                        .foregroundColor(Color.black.opacity(1)) // Явно указываем непрозрачность
+                        .lineLimit(1)
                     
                     Spacer()
                 }
                 .padding(.top, 12)
                 .padding(.horizontal, 12)
                 
-                // Author info
+                // Автор
                 HStack(spacing: 5) {
-                    if let authorAvatar = viewModel.authorAvatar {
-                        Image(uiImage: authorAvatar)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 15, height: 15)
-                            .clipShape(Circle())
-                    } else {
-                        Circle()
-                            .fill(Color.gray.opacity(0.5))
-                            .frame(width: 15, height: 15)
-                    }
+                    Circle()
+                        .fill(Color(hex: Constants.Colors.accent).opacity(0.7))
+                        .frame(width: 18, height: 18)
+                        .overlay(
+                            Text(String(authorName.prefix(1)))
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.white)
+                        )
                     
-                    Text(viewModel.authorName)
-                        .font(.custom("Outfit-Regular", size: 13))
+                    Text(authorName)
+                        .font(.custom(Constants.Fonts.regular, size: 13))
+                        .foregroundColor(Color.black.opacity(0.8)) // Раскомментировал цвет текста
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 5)
                 
-                // Description
+                // Описание
                 Text(route.description)
-                    .font(.custom("Outfit-Regular", size: 13))
-                    .opacity(0.5)
-                    .padding(.horizontal, 12)
-                    .padding(.top, 5)
-                    .padding(.bottom, 12)
+                    .font(.custom(Constants.Fonts.regular, size: 13))
+                    .foregroundColor(Color.black.opacity(0.7)) // Раскомментировал цвет текста
                     .lineLimit(2)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 6)
+                    .padding(.bottom, 12)
             }
-            .frame(width: 370, height: 91)
-            .background(Color(hex: Constants.Colors.cardDark))
+            .frame(height: 91)
+            .background(Color(hex: Constants.Colors.cardDark).opacity(1)) // Явная непрозрачность
             .clipShape(RoundedRectangle(cornerRadius: 10))
+            .zIndex(3) // Информация над изображением
         }
-        .frame(width: 370, height: 224)
+        .frame(height: 224)
+        .compositingGroup() // Добавляем группировку композиции
         .onAppear {
-            // Вызов метода viewModel вместо локального
-            viewModel.loadAuthorInfo(for: route)
+            loadAuthorName()
+        }
+    }
+    
+    // Загрузка имени автора
+    private func loadAuthorName() {
+        UserDataStore.shared.getUser(id: route.creator.id) { user in
+            if let user = user {
+                self.authorName = user.username
+            }
         }
     }
 }
 
-// ViewModel для RouteCard
-class RouteCardViewModel: ObservableObject {
-    @Published var authorName: String = "User"
-    @Published var authorAvatar: UIImage? = nil
-    
-    private var cancellables = Set<AnyCancellable>()
-    
-    func loadAuthorInfo(for route: Route) {
-        UserDataStore.shared.getUser(id: route.creator.id) { [weak self] user in
-            if let user = user {
-                DispatchQueue.main.async {
-                    self?.authorName = user.username
-                }
-                
-                // Load user avatar image
-                ImageService.shared.loadImage(from: user.avatarURL)
-                    .receive(on: DispatchQueue.main)
-                    .sink { [weak self] image in
-                        self?.authorAvatar = image
-                    }
-                    .store(in: &self!.cancellables)
-            }
-        }
+// Предварительный просмотр для отладки (для использования в Preview)
+struct RouteCard_Previews: PreviewProvider {
+    static var previews: some View {
+        RouteCard(route: Route(
+            id: UUID(),
+            name: "Тестовый маршрут",
+            description: "Описание тестового маршрута с подробной информацией",
+            imageURL: nil,
+            creator: Route.Creator(id: UUID())
+        ))
+        .frame(width: 370)
+        .previewLayout(.sizeThatFits)
+        .padding()
+        .background(Color(hex: Constants.Colors.background))
     }
 }
