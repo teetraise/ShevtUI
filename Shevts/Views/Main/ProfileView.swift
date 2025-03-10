@@ -1,8 +1,11 @@
 import SwiftUI
+import Combine
 
 struct ProfileView: View {
     // Состояние для отслеживания открытия окна редактирования
     @State private var showEditProfile = false
+    @EnvironmentObject var routesViewModel: RoutesViewModel
+    @State private var cancellables = Set<AnyCancellable>()
     
     var body: some View {
         ZStack {
@@ -19,11 +22,11 @@ struct ProfileView: View {
                     statsSection
                         .padding(.top, 24)
                     
-                    // Секция Коллекций
-                    collectionsSection
+                    // Секция коллекций
+                    myRoutesSection
                         .padding(.top, 24)
                     
-                    // Секция Сохраненных мест
+                    // Секция сохраненных мест
                     savedPlacesSection
                         .padding(.top, 32)
                         .padding(.bottom, 32)
@@ -34,6 +37,9 @@ struct ProfileView: View {
         // Показ экрана редактирования
         .sheet(isPresented: $showEditProfile) {
             EditProfileView(isPresented: $showEditProfile)
+        }
+        .onAppear {
+            loadMyRoutes()
         }
     }
     
@@ -95,7 +101,7 @@ struct ProfileView: View {
         HStack(spacing: 0) {
             Spacer()
             
-            makeStatItem(count: "15", title: "Collections")
+            makeStatItem(count: "\(routesViewModel.myRoutes.count)", title: "Маршруты")
             
             Spacer()
             
@@ -128,42 +134,69 @@ struct ProfileView: View {
         .padding(.horizontal, 26)
     }
     
-    // Секция коллекций
-    var collectionsSection: some View {
+    // Секция моих маршрутов
+    var myRoutesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Заголовок секции
             HStack {
-                Text("My Collections")
+                Text("Мои маршруты")
                     .font(.custom(Constants.Fonts.medium, size: 24))
                 
                 Spacer()
                 
                 // Кнопка "Смотреть все"
                 Button(action: {}) {
-                    Text("See all")
+                    Text("Все")
                         .font(.custom(Constants.Fonts.regular, size: 16))
                         .foregroundColor(Color(hex: Constants.Colors.accent))
                 }
             }
             .padding(.horizontal, 26)
             
-            // Горизонтальный список коллекций
+            // Индикатор загрузки
+            if routesViewModel.isLoading {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+                .padding(.top, 10)
+            }
+            
+            // Сообщение об ошибке
+            if let errorMessage = routesViewModel.errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .font(.custom(Constants.Fonts.regular, size: 14))
+                    .padding(.horizontal, 26)
+                    .padding(.top, 10)
+            }
+            
+            // Горизонтальный список маршрутов
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     // Левый отступ
                     Spacer()
-                        .frame(width: 0)
+                        .frame(width: 16)
                     
-                    // Элементы коллекций
-                    makeCollectionItem(title: "Favorite Cafes", count: 12)
-                    makeCollectionItem(title: "Best Street Food", count: 8)
-                    makeCollectionItem(title: "Hidden Gems", count: 5)
+                    if routesViewModel.myRoutes.isEmpty && !routesViewModel.isLoading {
+                        Text("У вас нет маршрутов")
+                            .font(.custom(Constants.Fonts.regular, size: 16))
+                            .foregroundColor(.gray)
+                            .padding(.vertical, 40)
+                    } else {
+                        // Элементы маршрутов
+                        ForEach(routesViewModel.myRoutes) { route in
+                            NavigationLink(destination: RouteDetailView(route: route)) {
+                                makeRouteItem(route: route)
+                            }
+                        }
+                    }
                     
                     // Правый отступ
                     Spacer()
                         .frame(width: 10)
                 }
-                .padding(.leading, 16)
             }
         }
     }
@@ -199,6 +232,10 @@ struct ProfileView: View {
     
     // MARK: - Helper Methods
     
+    private func loadMyRoutes() {
+        routesViewModel.fetchMyRoutes()
+    }
+    
     // Метод для создания элемента статистики
     func makeStatItem(count: String, title: String) -> some View {
         VStack(spacing: 4) {
@@ -211,26 +248,37 @@ struct ProfileView: View {
         }
     }
     
-    // Метод для создания элемента коллекции
-    func makeCollectionItem(title: String, count: Int) -> some View {
+    // Метод для создания элемента маршрута
+    func makeRouteItem(route: Route) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Изображение коллекции
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.gray.opacity(0.3))
-                .frame(width: 160, height: 120)
-                .overlay(
-                    Image(systemName: "photo")
-                        .font(.system(size: 40))
-                        .foregroundColor(.white)
-                )
+            // Изображение маршрута
+            AsyncImage(url: ImageService.shared.getImageURL(path: route.imageURL ?? "")) { phase in
+                if let image = phase.image {
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 160, height: 120)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                } else {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 160, height: 120)
+                        .overlay(
+                            Image(systemName: "photo")
+                                .font(.system(size: 40))
+                                .foregroundColor(.white)
+                        )
+                }
+            }
             
-            // Название коллекции
-            Text(title)
+            // Название маршрута
+            Text(route.name)
                 .font(.custom(Constants.Fonts.medium, size: 16))
                 .foregroundColor(.black)
+                .lineLimit(1)
             
-            // Количество мест
-            Text("\(count) places")
+            // Количество мест (заглушка, можно добавить логику для получения количества)
+            Text("маршрут")
                 .font(.custom(Constants.Fonts.regular, size: 14))
                 .foregroundColor(.gray)
         }
@@ -274,11 +322,5 @@ struct ProfileView: View {
         .background(Color.white)
         .cornerRadius(10)
         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
-    }
-}
-
-struct ProfileView_Previews: PreviewProvider {
-    static var previews: some View {
-        ProfileView()
     }
 }

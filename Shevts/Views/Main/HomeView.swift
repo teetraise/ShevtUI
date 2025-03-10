@@ -1,8 +1,10 @@
 import SwiftUI
+import Combine
 
 struct HomeView: View {
     @State private var selectedTab: TopBarTab = .forYou
-    @State private var isFollowingAnyone: Bool = false // Изменяемое состояние для проверки наличия подписок
+    @EnvironmentObject var routesViewModel: RoutesViewModel
+    @State private var cancellables = Set<AnyCancellable>()
     
     var body: some View {
         ZStack {
@@ -36,10 +38,38 @@ struct HomeView: View {
                                 .padding(.leading, 26)
                                 .padding(.top, 13)
                             
+                            // Индикатор загрузки
+                            if routesViewModel.isLoading {
+                                HStack {
+                                    Spacer()
+                                    ProgressView()
+                                    Spacer()
+                                }
+                                .padding(.top, 20)
+                            }
+                            
+                            // Сообщение об ошибке
+                            if let errorMessage = routesViewModel.errorMessage {
+                                Text(errorMessage)
+                                    .foregroundColor(.red)
+                                    .font(.custom(Constants.Fonts.regular, size: 14))
+                                    .padding(.horizontal, 26)
+                                    .padding(.top, 20)
+                            }
+                            
                             // Большие карточки с рекомендациями
                             VStack(spacing: 23) {
-                                ForEach(getSampleRecommendations()) { recommendation in
-                                    RecommendationCard(recommendation: recommendation)
+                                if routesViewModel.recommendedRoutes.isEmpty && !routesViewModel.isLoading {
+                                    Text("Нет доступных маршрутов")
+                                        .font(.custom(Constants.Fonts.regular, size: 16))
+                                        .foregroundColor(.gray)
+                                        .padding(.top, 20)
+                                } else {
+                                    ForEach(routesViewModel.recommendedRoutes) { route in
+                                        NavigationLink(destination: RouteDetailView(route: route)) {
+                                            RouteCard(route: route)
+                                        }
+                                    }
                                 }
                             }
                             .padding(.top, 16)
@@ -55,51 +85,16 @@ struct HomeView: View {
                     // Following контент
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
-                            // Заголовок "Latest picks"
-                            Text("Latest picks")
+                            Text("Following")
                                 .font(.custom("Outfit-Medium", size: 24))
                                 .padding(.leading, 26)
                                 .padding(.top, 20)
-                                .padding(.bottom, 16)
                             
-                            if isFollowingAnyone {
-                                // Контент если есть подписки
-                                VStack(spacing: 23) {
-                                    ForEach(getFollowingRecommendations()) { recommendation in
-                                        RecommendationCard(recommendation: recommendation)
-                                    }
-                                }
-                                .padding(.horizontal, 26)
-                            } else {
-                                // Контент если нет подписок
-                                VStack(spacing: 10) {
-                                    // Изображение лисенка
-                                    Image("fox") // Используйте ваше изображение лисенка
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 250, height: 250)
-                                        .padding(.top, 10)
-                                    
-                                    // Текст сообщения
-                                    Text("You're not following anyone yet.")
-                                        .font(.custom("Outfit-Medium", size: 18))
-                                        .foregroundColor(.black)
-                                        .multilineTextAlignment(.center)
-                                        .padding(.top, -28)
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                            
-                            // Кнопка для переключения представления (только для демонстрации)
-                            // В реальном приложении эта кнопка будет удалена
-                            Button("Toggle Following State (Demo)") {
-                                isFollowingAnyone.toggle()
-                            }
-                            .padding()
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(8)
-                            .padding(.horizontal, 26)
-                            .padding(.top, 30)
+                            Text("People you follow will appear here")
+                                .font(.custom("Outfit-Regular", size: 16))
+                                .foregroundColor(.gray)
+                                .padding(.leading, 26)
+                                .padding(.top, 10)
                             
                             // Дополнительное пространство внизу для прокрутки
                             Spacer()
@@ -115,6 +110,13 @@ struct HomeView: View {
             }
         }
         .ignoresSafeArea(edges: .top)
+        .onAppear {
+            loadRecommendedRoutes()
+        }
+    }
+    
+    private func loadRecommendedRoutes() {
+        routesViewModel.fetchRecommendedRoutes()
     }
     
     // Пример данных для мини-рекомендаций
@@ -126,64 +128,87 @@ struct HomeView: View {
             MiniRecommendation(id: 4, title: "Moscow", image: "moscow_image")
         ]
     }
+}
+
+// Создаем компонент карточки маршрута на основе данных с сервера
+struct RouteCard: View {
+    let route: Route
     
-    // Пример данных для рекомендаций "For You"
-    private func getSampleRecommendations() -> [Recommendation] {
-        return [
-            Recommendation(
-                id: 1,
-                city: "Tbilisi",
-                author: "McLovin",
-                description: "Paradise for Russian relocants? Bars, stand-up clubs, and gardens.",
-                places: 15,
-                image: "tbilisi_image"
-            ),
-            Recommendation(
-                id: 2,
-                city: "Phuket",
-                author: "PETROVA",
-                description: "You'll never get bored — beautiful nature and girls.",
-                places: 9,
-                image: "phuket_image"
-            ),
-            Recommendation(
-                id: 3,
-                city: "Los Angeles",
-                author: "SEIN",
-                description: "The city of angels, Hollywood and palm trees.",
-                places: 12,
-                image: "la_image"
-            )
-        ]
-    }
-    
-    // Пример данных для рекомендаций "Following"
-    private func getFollowingRecommendations() -> [Recommendation] {
-        return [
-            Recommendation(
-                id: 4,
-                city: "Tbilisi",
-                author: "McLovin",
-                description: "Paradise for Russian relocants? Bars, stand-up clubs, and gardens.",
-                places: 15,
-                image: "tbilisi_image"
-            ),
-            Recommendation(
-                id: 5,
-                city: "Phuket",
-                author: "PETROVA",
-                description: "You'll never get bored — beautiful nature and girls.",
-                places: 99,
-                image: "phuket_image"
-            ),
-            Recommendation(
-                id: 6,
-                city: "Los Angeles",
-                author: "SEIN",
-                description: "Explore Hollywood, Venice Beach, and amazing food spots.",
-                places: 18,
-                image: "la_image"
-            )
-        ]
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            // Фон для всей карточки
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
+                .frame(width: 370, height: 224)
+            
+            // Изображение города
+            AsyncImage(url: ImageService.shared.getImageURL(path: route.imageURL ?? "")) { phase in
+                if let image = phase.image {
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 370, height: 235 - 81)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                } else if phase.error != nil {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 370, height: 235 - 81)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(
+                            Image(systemName: "photo")
+                                .font(.system(size: 40))
+                                .foregroundColor(.white)
+                        )
+                } else {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 370, height: 235 - 81)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        )
+                }
+            }
+            
+            // Информация о маршруте
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .center) {
+                    // Название города
+                    Text(route.name)
+                        .font(.custom("Outfit-Medium", size: 22))
+                    
+                    Spacer()
+                }
+                .padding(.top, 12)
+                .padding(.horizontal, 12)
+                
+                // Автор
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(Color.gray.opacity(0.5))
+                        .frame(width: 15, height: 15)
+                    
+                    Text("User")
+                        .font(.custom("Outfit-Regular", size: 13))
+                }
+                .padding(.horizontal, 12)
+                .padding(.top, 5)
+                
+                // Описание
+                Text(route.description)
+                    .font(.custom("Outfit-Regular", size: 13))
+                    .opacity(0.5)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 5)
+                    .padding(.bottom, 12)
+                    .lineLimit(2)
+            }
+            .frame(width: 370, height: 91)
+            .background(Color(hex: Constants.Colors.cardDark))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .frame(width: 370, height: 224)
     }
 }

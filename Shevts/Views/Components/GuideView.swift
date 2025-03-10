@@ -194,19 +194,6 @@ struct GuideView: View {
                 
                 // Адрес и описание
                 VStack(alignment: .leading, spacing: 8) {
-                    // Адрес
-                    if let address = place.address {
-                        HStack(spacing: 6) {
-                            Image(systemName: "mappin.circle.fill")
-                                .font(.system(size: 14))
-                                .foregroundColor(Color(hex: Constants.Colors.accent))
-                            
-                            Text(address)
-                                .font(.custom(Constants.Fonts.regular, size: 14))
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    
                     // Описание
                     Text(place.description)
                         .font(.custom(Constants.Fonts.regular, size: 15))
@@ -261,52 +248,4 @@ struct Guide {
     let author: String
     let description: String
     let places: [Place]
-}
-
-struct Place: Identifiable {
-    let id: Int
-    let order: Int
-    let name: String
-    let description: String
-    let address: String?
-    let image: String
-}
-
-// MARK: - Превью
-
-struct GuideView_Previews: PreviewProvider {
-    static var previews: some View {
-        GuideView(guide: Guide(
-            id: 1,
-            city: "Tbilisi",
-            author: "McLovin",
-            description: "Tbilisi is a paradise for Russian relocants. The city offers a blend of ancient and modern architecture, vibrant nightlife, delicious food, and a warm, welcoming atmosphere. This guide highlights the best spots to enjoy the local culture, from cafes and bars to hidden gardens and historical sites.",
-            places: [
-                Place(
-                    id: 1,
-                    order: 1,
-                    name: "Fabrika",
-                    description: "A former Soviet sewing factory transformed into a multi-functional urban space with cafes, bars, co-working spaces, and a hostel. It's a hub for creative people and digital nomads.",
-                    address: "Egnate Ninoshvili St 8, Tbilisi",
-                    image: "fabrika_image"
-                ),
-                Place(
-                    id: 2,
-                    order: 2,
-                    name: "Shavi Lomi",
-                    description: "A cozy restaurant hidden in the old town serving delicious Georgian cuisine with a modern twist. Their garden is perfect for summer evenings.",
-                    address: "4 Zurab Kvlividze St, Tbilisi",
-                    image: "shavi_lomi_image"
-                ),
-                Place(
-                    id: 3,
-                    order: 3,
-                    name: "Mtatsminda Park",
-                    description: "A large amusement park on top of Mount Mtatsminda offering breathtaking views of the entire city. Accessible by funicular railway.",
-                    address: "Mtatsminda Plateau, Tbilisi",
-                    image: "mtatsminda_image"
-                )
-            ]
-        ))
-    }
 }
