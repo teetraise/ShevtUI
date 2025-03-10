@@ -2,8 +2,10 @@ import SwiftUI
 import Combine
 
 struct ProfileView: View {
-    // Состояние для отслеживания открытия окна редактирования
+    // Состояние для отслеживания открытия окон
     @State private var showEditProfile = false
+    @State private var showCreateRouteSheet = false  // Перенесите сюда
+    
     @EnvironmentObject var routesViewModel: RoutesViewModel
     @State private var cancellables = Set<AnyCancellable>()
     @ObservedObject private var userDataStore = UserDataStore.shared
@@ -63,14 +65,26 @@ struct ProfileView: View {
             }
             
             // Аватар пользователя
-            Circle()
-                .fill(Color.gray.opacity(0.3))
-                .frame(width: 100, height: 100)
-                .overlay(
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 50))
-                        .foregroundColor(.white)
-                )
+            CachedAsyncImage(
+                urlString: userDataStore.currentUser?.avatarURL,
+                content: { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 100, height: 100)
+                        .clipShape(Circle())
+                },
+                placeholder: {
+                    Circle()
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 100, height: 100)
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 50))
+                                .foregroundColor(.white)
+                        )
+                }
+            )
             
             // Имя пользователя
             Text(userDataStore.currentUser?.username ?? "Alex Smith")
@@ -139,13 +153,26 @@ struct ProfileView: View {
     var myRoutesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Заголовок секции
+            // Add this to the myRoutesSection in ProfileView
+            // Replace the existing HStack containing the section header
+            
+            // Заголовок секции
             HStack {
                 Text("Мои маршруты")
                     .font(.custom(Constants.Fonts.medium, size: 24))
                 
                 Spacer()
                 
-                // Кнопка "Смотреть все"
+                // Add button to create new route
+                Button(action: {
+                    showCreateRouteSheet = true
+                }) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundColor(Color(hex: Constants.Colors.accent))
+                }
+                
+                // Button "See all"
                 Button(action: {}) {
                     Text("Все")
                         .font(.custom(Constants.Fonts.regular, size: 16))
@@ -323,5 +350,18 @@ struct ProfileView: View {
         .background(Color.white)
         .cornerRadius(10)
         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
+        .preferredColorScheme(.light)
+        // Показ экрана редактирования профиля
+        .sheet(isPresented: $showEditProfile) {
+            EditProfileView(isPresented: $showEditProfile)
+        }
+        // Показ экрана создания маршрута
+        .sheet(isPresented: $showCreateRouteSheet) {
+            CreateRouteView()
+                .environmentObject(routesViewModel)
+        }
+        .onAppear {
+            loadMyRoutes()
+        }
     }
 }

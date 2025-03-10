@@ -114,15 +114,17 @@ struct PlaceListItem: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            // Изображение места
-            AsyncImage(url: ImageService.shared.getImageURL(path: place.imageURL ?? "")) { phase in
-                if let image = phase.image {
+            // Place image
+            CachedAsyncImage(
+                urlString: place.imageURL,
+                content: { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: 80, height: 80)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
-                } else {
+                },
+                placeholder: {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(Color.gray.opacity(0.3))
                         .frame(width: 80, height: 80)
@@ -132,9 +134,9 @@ struct PlaceListItem: View {
                                 .foregroundColor(.white)
                         )
                 }
-            }
+            )
             
-            // Информация о месте
+            // Place information
             VStack(alignment: .leading, spacing: 4) {
                 Text(place.name)
                     .font(.custom(Constants.Fonts.medium, size: 16))
